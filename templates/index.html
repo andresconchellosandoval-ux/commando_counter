@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contador de Shakes</title>
+    <style>
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #0f172a; color: white; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .card { background: #1e293b; padding: 2rem; border-radius: 20px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); width: 100%; max-width: 400px; text-align: center; border: 1px solid #334155; }
+        h1 { font-size: 1.5rem; margin-bottom: 1.5rem; color: #f8fafc; }
+        
+        /* Botón Unificado */
+        .drop-area { border: 2px dashed #64748b; border-radius: 12px; padding: 40px 20px; cursor: pointer; transition: all 0.3s; background: #0f172a; display: block; }
+        .drop-area:hover { border-color: #38bdf8; background: #1e293b; }
+        .drop-area p { margin: 0; color: #94a3b8; }
+        .drop-area b { color: #38bdf8; }
+        
+        input[type="file"] { display: none; }
+        
+        .result { margin-top: 20px; padding: 15px; background: #064e3b; border-radius: 10px; color: #4ade80; font-size: 1.2rem; font-weight: bold; }
+        .error { margin-top: 20px; padding: 10px; background: #450a0a; border-radius: 10px; color: #f87171; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h1>Contador de Vasos 🥤</h1>
+
+    <form method="POST" enctype="multipart/form-data" id="upload-form">
+        <label class="drop-area" id="drop-zone">
+            <p>Arrastra tu Excel aquí o <br><b>haz clic para buscar</b></p>
+            <input type="file" name="file" id="file-input" onchange="this.form.submit()">
+        </label>
+    </form>
+
+    {% if total_vasos is not none %}
+    <div class="result">
+        Se usaron {{ total_vasos }} vasos
+    </div>
+    {% endif %}
+
+    {% if error %}
+    <div class="error">
+        ⚠️ {{ error }}
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+
+    // Efecto visual al arrastrar
+    ['dragover', 'dragenter'].forEach(type => {
+        dropZone.addEventListener(type, (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = "#38bdf8";
+        });
+    });
+
+    ['dragleave', 'drop'].forEach(type => {
+        dropZone.addEventListener(type, (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = "#64748b";
+        });
+    });
+
+    // Manejar el archivo soltado
+    dropZone.addEventListener('drop', (e) => {
+        fileInput.files = e.dataTransfer.files;
+        document.getElementById('upload-form').submit();
+    });
+</script>
+
+</body>
+</html>
