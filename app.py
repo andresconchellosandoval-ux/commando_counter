@@ -7,7 +7,7 @@ import os
 from datetime import datetime
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', 'commando_ultra_secret_2026')
+app.secret_key = os.environ.get('SECRET_KEY', 'commando_inv_2026')
 
 # --- CONFIGURACIÓN DE BASE DE DATOS ---
 database_url = os.environ.get('DATABASE_URL')
@@ -16,7 +16,6 @@ if database_url and database_url.startswith("postgres://"):
 
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url or 'sqlite:///commando.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
 db = SQLAlchemy(app)
 
 # --- MODELOS ---
@@ -29,14 +28,18 @@ class User(db.Model):
 class Record(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     date = db.Column(db.DateTime, default=datetime.now)
-    total_vasos = db.Column(db.Integer, nullable=False)
+    inv_inicial = db.Column(db.Integer, nullable=False)
+    ventas_sistema = db.Column(db.Integer, nullable=False)
+    inv_teorico = db.Column(db.Integer, nullable=False)
+    conteo_fisico = db.Column(db.Integer, nullable=False)
+    diferencia = db.Column(db.Integer, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
-# --- CREACIÓN DE TABLAS (Fuera del main para que Gunicorn lo vea) ---
+# Crear tablas al iniciar (para Render/Postgres)
 with app.app_context():
     db.create_all()
 
-# --- LÓGICA DE PROCESAMIENTO ---
+# --- LÓGICA DE PROCESAMIENTO EXCEL ---
 def procesar_archivo(ruta, filename):
     try:
         df = pd.read_excel(ruta) if filename.endswith(('.xlsx', '.xls')) else pd.read_csv(ruta, encoding="latin1")
@@ -65,45 +68,61 @@ def login():
         if user and check_password_hash(user.password, request.form['password']):
             session['user_id'] = user.id
             return redirect(url_for('dashboard'))
-        flash('Usuario o contraseña incorrectos')
+        flash('Credenciales incorrectas')
     return render_template('login.html')
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        if User.query.filter_by(username=request.form['username'].strip()).first():
-            flash('El usuario ya existe')
-        else:
+        user_exists = User.query.filter_by(username=request.form['username'].strip()).first()
+        if not user_exists:
             hashed_pw = generate_password_hash(request.form['password'])
             db.session.add(User(username=request.form['username'].strip(), password=hashed_pw))
             db.session.commit()
             return redirect(url_for('login'))
+        flash('El usuario ya existe')
     return render_template('register.html')
 
 @app.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
     if 'user_id' not in session: return redirect(url_for('login'))
     user = User.query.get(session['user_id'])
-    total_vasos = None
+    
+    # Obtener el último conteo físico para sugerir inventario inicial
+    ultimo = Record.query.filter_by(user_id=user.id).order_by(Record.date.desc()).first()
+    sugerido = ultimo.conteo_fisico if ultimo else 0
+    
+    res_hoy = None
     if request.method == 'POST':
         file = request.files.get('file')
+        inv_ini = int(request.form.get('inv_inicial', 0))
+        fisico = int(request.form.get('conteo_fisico', 0))
+        
         if file:
             if not os.path.exists('uploads'): os.makedirs('uploads')
             path = os.path.join('uploads', file.filename)
             file.save(path)
-            total_vasos = procesar_archivo(path, file.filename)
-            db.session.add(Record(total_vasos=total_vasos, user_id=user.id))
+            
+            ventas = procesar_archivo(path, file.filename)
+            teorico = inv_ini - ventas
+            dif = fisico - teorico
+            
+            res_hoy = Record(inv_inicial=inv_ini, ventas_sistema=ventas, 
+                             inv_teorico=teorico, conteo_fisico=fisico, 
+                             diferencia=dif, user_id=user.id)
+            db.session.add(res_hoy)
             db.session.commit()
             if os.path.exists(path): os.remove(path)
-    historial = Record.query.filter_by(user_id=user.id).order_by(Record.date.desc()).limit(10).all()
-    return render_template('dashboard.html', user=user, total_vasos=total_vasos, historial=historial)
+            sugerido = fisico # Actualizar sugerencia tras guardar
+
+    historial = Record.query.filter_by(user_id=user.id).order_by(Record.date.desc()).limit(15).all()
+    return render_template('dashboard.html', user=user, res=res_hoy, historial=historial, sugerido=sugerido)
 
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('login'))
 
-# Esto solo sirve para tu PC local
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
