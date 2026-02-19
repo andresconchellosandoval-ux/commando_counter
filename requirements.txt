@@ -1,7 +1,6 @@
-flask
-flask-sqlalchemy
-flask-login
-flask-bcrypt
+Flask
+Flask-SQLAlchemy
 pandas
 openpyxl
 gunicorn
+werkzeug
