@@ -133,14 +133,14 @@ def logout():
     session.clear()
     return redirect(url_for('login'))
 
-# --- SOLUCIÓN ERROR F405 (CREACIÓN DE TABLAS) ---
 if __name__ == '__main__':
     with app.app_context():
-        # Esta línea crea las tablas 'user' y 'record' si no existen en PostgreSQL
         db.create_all()
         db.session.commit()
-        
-    # Render asigna un puerto dinámico mediante la variable PORT
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
     
+    # ESTA ES LA PARTE QUE ARREGLA TU ERROR:
+    # Render inyecta un puerto automáticamente, si no lo encuentra usa el 5000
+    port = int(os.environ.get("PORT", 5000))
+    
+    # Importante: host debe ser '0.0.0.0' para que sea público
+    app.run(host='0.0.0.0', port=port)
