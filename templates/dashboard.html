@@ -1,37 +1,115 @@
-<div class="card">
-    <div style="text-align: right; font-size: 12px; margin-bottom: 10px;">
-        <span style="color: #8b949e;">{{ user.username }}</span> | 
-        <a href="/logout" style="color: #f85149; text-decoration: none;">Salir</a>
-    </div>
-    
-    <img src="{{ url_for('static', filename='logo.png') }}" class="logo" alt="Commando Studio">
-    
-    {% if total_vasos is none %}
-    <form method="POST" enctype="multipart/form-data">
-        <label class="drop-area">
-            <p style="color: #8b949e; margin-bottom: 15px;">Reporte diario de ventas</p>
-            <span style="color: #38bdf8; font-weight: bold; font-size: 16px;">+ Seleccionar Archivo</span>
-            <input type="file" name="file" onchange="this.form.submit()" accept=".csv, .xlsx, .xls">
-        </label>
-    </form>
-    {% else %}
-    <div class="result-box">
-        <div class="result-label">Total Shakes</div>
-        <h2>{{ total_vasos }}</h2>
-    </div>
-    <a href="/dashboard" class="btn-reset">↺ Cargar otro reporte</a>
-    {% endif %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | Commando Counter</title>
+    <style>
+        body { 
+            background: #0b0f1a; 
+            color: white; 
+            font-family: -apple-system, system-ui, sans-serif; 
+            margin: 0; padding: 20px;
+            display: flex; justify-content: center;
+        }
+        .container { width: 100%; max-width: 600px; text-align: center; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
+        .user-info { font-size: 14px; color: #58a6ff; }
+        .logout { color: #f85149; text-decoration: none; font-weight: bold; margin-left: 10px; }
+        
+        .logo { max-width: 200px; margin: 20px 0; }
+        
+        .upload-card {
+            background: #161b22;
+            padding: 30px;
+            border-radius: 20px;
+            border: 1px solid #30363d;
+            margin-bottom: 30px;
+        }
+        
+        h3 { color: #8b949e; font-weight: 400; margin-bottom: 20px; }
+        
+        .result {
+            font-size: 48px;
+            font-weight: bold;
+            color: #38bdf8;
+            margin: 20px 0;
+        }
+        .result-label { font-size: 14px; color: #8b949e; text-transform: uppercase; }
 
-    <div style="margin-top: 30px; text-align: left;">
-        <p style="font-size: 12px; color: #8b949e; text-transform: uppercase; letter-spacing: 1px;">Historial Reciente</p>
-        <table style="width: 100%; font-size: 14px; border-collapse: collapse;">
-            {% for rec in historial %}
-            <tr style="border-bottom: 1px solid #30363d;">
-                <td style="padding: 10px 0; color: #8b949e;">{{ rec.date.strftime('%d/%m') }}</td>
-                <td style="padding: 10px 0; text-align: right; font-weight: bold; color: #38bdf8;">{{ rec.total_vasos }} vasos</td>
-            </tr>
-            {% endfor %}
+        input[type="file"] { margin: 20px 0; color: #8b949e; }
+        
+        button {
+            background: #38bdf8; color: #0b0f1a;
+            border: none; padding: 12px 25px;
+            border-radius: 10px; font-weight: bold;
+            cursor: pointer; transition: 0.3s;
+        }
+        button:hover { background: #7dd3fc; transform: translateY(-2px); }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: #161b22;
+            border-radius: 15px;
+            overflow: hidden;
+            border: 1px solid #30363d;
+        }
+        .history-table th, .history-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #30363d;
+        }
+        .history-table th { background: #1f242c; color: #8b949e; font-size: 12px; text-transform: uppercase; }
+        .history-table tr:last-child td { border-bottom: none; }
+        .history-val { color: #38bdf8; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <span class="user-info">Hola, <strong>{{ user.username }}</strong></span>
+            <a href="/logout" class="logout">Salir</a>
+        </div>
+
+        <img src="{{ url_for('static', filename='logo.png') }}" class="logo">
+
+        <div class="upload-card">
+            <h3>Reporte diario de ventas</h3>
+            
+            <form method="POST" enctype="multipart/form-data">
+                <input type="file" name="file" accept=".xlsx, .xls, .csv" required>
+                <br>
+                <button type="submit">Calcular Vasos</button>
+            </form>
+
+            {% if total_vasos is not none %}
+                <div class="result">{{ total_vasos }}</div>
+                <div class="result-label">Vasos detectados</div>
+            {% endif %}
+        </div>
+
+        <h3 style="text-align: left; margin-left: 10px;">Historial Reciente</h3>
+        <table class="history-table">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Total Vasos</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in historial %}
+                <tr>
+                    <td>{{ record.date.strftime('%d/%m/%Y %H:%M') }}</td>
+                    <td class="history-val">{{ record.total_vasos }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
         </table>
     </div>
-</div>
+
+</body>
+</html>
 
