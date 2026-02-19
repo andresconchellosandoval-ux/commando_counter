@@ -5,33 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Commando Counter</title>
     <style>
-        /* Reutilizamos tus estilos base */
-        body { background: #0b0f1a; color: white; font-family: sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .card { background: #161b22; padding: 40px; border-radius: 30px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); width: 100%; max-width: 320px; text-align: center; border: 1px solid #30363d; }
-        .logo { max-width: 150px; margin-bottom: 20px; }
-        
-        /* Estilos de formulario */
-        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px; border: 1px solid #30363d; background: #0b0f1a; color: white; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; background: #38bdf8; border: none; border-radius: 10px; color: #0b0f1a; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        .link { display: block; margin-top: 20px; color: #58a6ff; text-decoration: none; font-size: 13px; }
-        .flash { color: #f85149; font-size: 13px; margin-bottom: 15px; }
+        body { background: #0b0f1a; color: white; font-family: sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
+        .card { background: #161b22; padding: 40px 20px; border-radius: 30px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); width: 100%; max-width: 350px; text-align: center; border: 1px solid #30363d; }
+        .logo { max-width: 180px; height: auto; margin-bottom: 30px; }
+        h2 { margin-bottom: 25px; font-weight: 600; }
+        input { width: 100%; padding: 15px; margin-bottom: 15px; border-radius: 12px; border: 1px solid #30363d; background: #0b0f1a; color: white; font-size: 16px; box-sizing: border-box; outline: none; }
+        input:focus { border-color: #38bdf8; }
+        button { width: 100%; padding: 15px; background: #38bdf8; border: none; border-radius: 12px; color: #0b0f1a; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        button:hover { background: #7dd3fc; transform: translateY(-2px); }
+        .link { display: block; margin-top: 25px; color: #58a6ff; text-decoration: none; font-size: 14px; }
+        .flash-msg { background: rgba(56, 189, 248, 0.1); color: #38bdf8; padding: 10px; border-radius: 10px; margin-bottom: 20px; font-size: 14px; border: 1px solid rgba(56, 189, 248, 0.2); }
     </style>
 </head>
 <body>
     <div class="card">
         <img src="{{ url_for('static', filename='logo.png') }}" class="logo">
         <h2>Iniciar Sesión</h2>
-        
         {% with messages = get_flashed_messages() %}
-          {% if messages %}<div class="flash">{{ messages[0] }}</div>{% endif %}
+          {% if messages %}
+            {% for message in messages %}<div class="flash-msg">{{ message }}</div>{% endfor %}
+          {% endif %}
         {% endwith %}
-
         <form method="POST">
             <input type="text" name="username" placeholder="Usuario" required>
             <input type="password" name="password" placeholder="Contraseña" required>
             <button type="submit">Entrar</button>
         </form>
-        <a href="/register" class="link">¿No tienes cuenta? Regístrate aquí</a>
+        <a href="{{ url_for('register') }}" class="link">¿No tienes cuenta? Regístrate aquí</a>
     </div>
 </body>
 </html>
+
